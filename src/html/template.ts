@@ -667,7 +667,7 @@ export function determineBindings(root: Node): Array<Binding> {
                         continue
                     }
 
-                    bindings.push(new BooleanAttributeBinding(nodeIndex, name.substr(1), extractPlaceholderId(parts[0])))
+                    bindings.push(new BooleanAttributeBinding(nodeIndex, name.substring(1), extractPlaceholderId(parts[0])))
                     continue
                 }
 
@@ -686,7 +686,7 @@ export function determineBindings(root: Node): Array<Binding> {
                         continue
                     }
 
-                    bindings.push(new PropertyBinding(nodeIndex, name.substr(1), extractPlaceholderId(parts[0])))
+                    bindings.push(new PropertyBinding(nodeIndex, name.substring(1), extractPlaceholderId(parts[0])))
                     continue
                 }
 
