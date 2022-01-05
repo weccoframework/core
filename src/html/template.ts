@@ -705,7 +705,7 @@ export function determineBindings(root: Node): Array<Binding> {
                     }
 
                     const directives: EventListenerAttributeDirectives = {}
-                    const [eventName, ...directive] = name.substr(1).split("+")
+                    const [eventName, ...directive] = name.substring(1).split("+")
                     directive.forEach(optName => {
                         switch (optName.toLocaleLowerCase()) {
                             case "capture":
