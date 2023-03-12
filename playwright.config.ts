@@ -4,7 +4,7 @@ export default defineConfig({
     webServer: {
         command: "npm run acceptance-test-server",
         url: "http://localhost:8888/",
-        timeout: 120 * 1000,
+        timeout: 10 * 1000,
         reuseExistingServer: !process.env.CI,
     },
     use: {
