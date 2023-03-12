@@ -31,25 +31,6 @@ try {
     mkdirSync(reportsDirectory, { recursive: true })
 }
 
-const app = express()
-app.get("/", (req, res) => {
-    res
-        .status(200)
-        .contentType("text/html")
-        .send(`
-                <!doctype html>
-                <html>
-                    <head>
-                        <title>@wecco/core Acceptance Test</title>
-                        <script src="/wecco-core.js"></script>
-                    </head>
-                    <body>
-                        <div id="app"></div>
-                    </body>
-                </html>
-            `)
-})
-
 let jsSource
 
 rollup.rollup({
@@ -65,23 +46,41 @@ rollup.rollup({
         commonjs(),
     ],
 })
-.then(bundle => bundle.generate({
-    name: "wecco",
-    format: "umd",
-}))
-.then(b => {
-    jsSource = b.output[0].code
-})
-
-app.get("/wecco-core.js", async (req, res) => {
-    res
-        .status(200)
-        .contentType("text/javascript")
-        .send(jsSource)
-})
-
-const server = app.listen(8888)
-
-process.on("exit", () => {
-    server.close()
-})
+    .then(bundle => bundle.generate({
+        name: "wecco",
+        format: "umd",
+    }))
+    .then(b => b.output[0].code)
+    .then(jsSource => {
+        const app = express()
+        app.get("/", (req, res) => {
+            res
+                .status(200)
+                .contentType("text/html")
+                .send(`
+                        <!doctype html>
+                        <html>
+                            <head>
+                                <title>@wecco/core Acceptance Test</title>
+                                <script src="/wecco-core.js"></script>
+                            </head>
+                            <body>
+                                <div id="app"></div>
+                            </body>
+                        </html>
+                    `)
+        })
+        
+        app.get("/wecco-core.js", async (req, res) => {
+            res
+                .status(200)
+                .contentType("text/javascript")
+                .send(jsSource)
+        })
+        
+        const server = app.listen(8888)
+        
+        process.on("exit", () => {
+            server.close()
+        })
+    })
