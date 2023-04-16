@@ -15,66 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-let wecco: any
 
-import {cpus, totalmem, arch, type} from "os"
-import { Page, TestInfo, test } from "@playwright/test"
-
-interface TestCase {
-    prepare?: () => void | Promise<void>
-    sample: () => number | Promise<number>
-}
-
-interface TestResult {
-    info: TestInfo
-    duration: number
-    iterations: number
-}
-
-const defaultIterations = 1000
+import { test } from "./benchmark"
 
 test.describe("performance", () => {
-    const testResults: Array<TestResult> = []
-
-    async function runTest (page: Page, info: TestInfo, testCase: TestCase, iterations = defaultIterations) {
-        if (testCase.prepare) {
-            await page.evaluate(testCase.prepare)
-        }
-
-        let dur = 0
-        for (let i = 0; i < iterations; i++) {
-            dur += await page.evaluate(testCase.sample)
-        }
-
-        testResults.push({
-            info: info,
-            duration: dur,
-            iterations: iterations,
-        })
-    }
-    
-    test.afterAll(() => {
-        console.log()
-        console.log("BENCHMARK RESULTS")
-        console.log(`OS: ${type()} ${arch}`)
-        console.log(`CPU: ${cpus()[0].model}`)
-        console.log(`Mem: ${(totalmem() / 1024 / 1024 / 1024).toFixed(0)}GB`)
-        testResults.forEach(r => 
-            console.log(`${r.info.titlePath.slice(2).join(" ▶ ")} ⇒ ${r.duration.toFixed(2)}ms (${(r.duration / r.iterations).toFixed(4)}ms per iteration)`)
-        )
-        console.log()
-    })
-
-    test.describe("rendering", () => {
-        test("render function", async ({ page }, info) => {
-            await page.goto(".")
-
-            await runTest(page, info, {
+    test.describe("initial rendering", () => {
+        test("render function", async ({ benchmark }) => {
+            await benchmark({
                 prepare: () => {
-                    window.div = function(text) {
+                    window.div = function (text) {
                         return wecco.html`<div>${text}</div>`
                     }
-    
+
                     const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                     const len = 16
                     window.randomString = function () {
@@ -82,9 +34,9 @@ test.describe("performance", () => {
                         for (let i = 0; i < len; i++) {
                             s += alphabet.charAt(Math.random() * alphabet.length)
                         }
-    
+
                         return s
-                    }                    
+                    }
                 },
 
                 sample: () => {
@@ -97,10 +49,8 @@ test.describe("performance", () => {
             })
         })
 
-        test("custom element", async ({ page }, info) => {
-            await page.goto(".")
-
-            await runTest(page, info, {
+        test("custom element", async ({ benchmark }) => {
+            await benchmark({
                 prepare: () => {
                     window.div = wecco.define("perftest-div", ({ text }, _) => wecco.html`<div>${text}</div>`)
 
@@ -111,7 +61,7 @@ test.describe("performance", () => {
                         for (let i = 0; i < len; i++) {
                             s += alphabet.charAt(Math.random() * alphabet.length)
                         }
-    
+
                         return s
                     }
                 },
@@ -123,9 +73,9 @@ test.describe("performance", () => {
                         const d = div({ text: randomString() })
                         d.addEventListener("renderingComplete", () => {
                             resolve(performance.now() - start)
-                        }, { once: true})
+                        }, { once: true })
 
-                        wecco.updateElement(e, d)                    
+                        wecco.updateElement(e, d)
                     })
                 }
             })
@@ -133,15 +83,13 @@ test.describe("performance", () => {
     })
 
     test.describe("update previous rendering", () => {
-        test("render function", async ({ page }, info) => {
-            await page.goto(".")
-
-            await runTest(page, info, {
+        test("render function", async ({ benchmark }) => {
+            await benchmark({
                 prepare: () => {
                     window.div = function (text) {
                         return wecco.html`<div>${text}</div>`
                     }
-    
+
                     const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                     const len = 16
                     window.randomString = function () {
@@ -149,10 +97,10 @@ test.describe("performance", () => {
                         for (let i = 0; i < len; i++) {
                             s += alphabet.charAt(Math.random() * alphabet.length)
                         }
-    
+
                         return s
                     }
-    
+
                     wecco.updateElement("#app", div(randomString()))
                 },
 
@@ -164,10 +112,8 @@ test.describe("performance", () => {
             })
         })
 
-        test("custom element", async ({ page }, info) => {
-            await page.goto(".")
-
-            await runTest(page, info, {
+        test("custom element", async ({ benchmark }) => {
+            await benchmark({
                 prepare: () => {
                     window.div = wecco.define("perftest-div", ({ text }, _) => wecco.html`<div>${text}</div>`)
 
@@ -178,10 +124,10 @@ test.describe("performance", () => {
                         for (let i = 0; i < len; i++) {
                             s += alphabet.charAt(Math.random() * alphabet.length)
                         }
-    
+
                         return s
                     }
-    
+
                     window.instance = div({ text: randomString() })
                     instance.mount("#app")
                 },
@@ -191,8 +137,8 @@ test.describe("performance", () => {
                         const start = performance.now()
                         instance.addEventListener("renderingComplete", () => {
                             resolve(performance.now() - start)
-                        }, { once: true})
-                        instance.setData({ text: randomString() })                    
+                        }, { once: true })
+                        instance.setData({ text: randomString() })
                     })
                 }
             })
