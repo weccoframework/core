@@ -401,11 +401,6 @@ function modelKeyForAttributeName(attributeName: string): string {
 export function component<T>(componentName: string, data?: T, host?: string | Element): WeccoElement<T> {
     const el = document.createElement(componentName) as WeccoElement<T>
 
-    // if (!(el instanceof WeccoElement)) {
-    //     console.error("Element is not a defined Weco element:", el)
-    //     return
-    // }
-
     el.setData(data)
 
     if (typeof host !== "undefined" && host !== null) {
