@@ -32,7 +32,7 @@ interface TestResult {
     iterations: number
 }
 
-const defaultIterations = 10000
+const defaultIterations = 1000
 
 type Benchmark = (spec: Spec) => Promise<void>
 
