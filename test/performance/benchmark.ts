@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import {cpus, totalmem, arch, type} from "os"
+import { cpus, totalmem, arch, type } from "os"
 import { Browser, Page, TestInfo, test as base } from "@playwright/test"
 
 export interface Spec {
@@ -32,15 +32,15 @@ interface TestResult {
     iterations: number
 }
 
-const defaultIterations = 1000
+const defaultIterations = 10000
 
 type Benchmark = (spec: Spec) => Promise<void>
 
 export class Benchmarker {
     private results = [] as Array<TestResult>
-    constructor (private readonly browser: Browser) {}
+    constructor(private readonly browser: Browser) { }
 
-    async run (page: Page, info: TestInfo, spec: Spec) {
+    async run(page: Page, info: TestInfo, spec: Spec) {
         if (spec.prepare) {
             await page.evaluate(spec.prepare)
         }
@@ -62,33 +62,88 @@ export class Benchmarker {
             iterations: iterations,
         })
     }
-    
-    printSummary () {
+
+    printSummary() {
         console.log()
         console.log("BENCHMARK RESULTS")
         console.log(`OS: ${type()} ${arch}`)
         console.log(`CPU: ${cpus()[0].model}`)
         console.log(`Mem: ${(totalmem() / 1024 / 1024 / 1024).toFixed(0)}GB`)
         console.log(`Browser: ${this.browser.browserType().name()}`)
-        this.results.forEach(r => 
-            console.log(`${r.info.titlePath.slice(2).join(" ▶ ")} ⇒ ${r.duration.toFixed(2)}ms (${(r.duration / r.iterations).toFixed(4)}ms per iteration)`)
-        )
+        console.log(formatTable(["Test", "Iterations", "Total Time", "Time per Iteration"], this.results.map(r => [
+            r.info.titlePath.slice(2).join(" ▶ "),
+            r.iterations.toString(),
+            `${r.duration.toFixed(2)} ms`,
+            `${(r.duration / r.iterations).toFixed(4)} ms`,
+        ])))
         console.log()
     }
 }
 
-export const test = base.extend< { benchmark: Benchmark }, { benchmarker: Benchmarker }>({
-    benchmarker: [async ({ browser }, use ) => {
+export const test = base.extend<{ benchmark: Benchmark }, { benchmarker: Benchmarker }>({
+    benchmarker: [async ({ browser }, use) => {
         const benchmarker = new Benchmarker(browser)
-  
+
         await use(benchmarker)
 
         benchmarker.printSummary()
     }, { scope: "worker" }],
-  
-    benchmark: async ({ page, benchmarker }, use, info) => {
-      await page.goto('.')
-      await use(benchmarker.run.bind(benchmarker, page, info))
-    },
-  })
 
+    benchmark: async ({ page, benchmarker }, use, info) => {
+        await page.goto('.')
+        await use(benchmarker.run.bind(benchmarker, page, info))
+    },
+})
+
+function formatTable (labels: Array<string>, rows: Array<Array<string>>) {
+    const widths = labels.map(l => l.length)
+    rows.forEach(row => row.forEach((cell, i) => {
+        const w = `${cell}`.length
+        if (w > widths[i]) {
+            widths[i] = w
+        }
+    }))
+
+    let r = ""
+    let sep = ""
+
+    labels.forEach((l, i) => {
+        if (i > 0) {
+            r += " | "
+            sep += "-+-"
+        }
+        r += pad(l, widths[i])
+        for (let j = 0; j < widths[i]; j++) {
+            sep += "-"
+        }
+    })
+    
+    r += "\n"
+    r += sep
+
+    rows.forEach(row => {
+        r += "\n"
+        row.forEach((cell, i) => {
+            if (i > 0) {
+                r += " | "
+            }
+
+            r += pad(cell, widths[i])
+        })
+    })
+
+    return r
+}
+
+function pad (s: string, w: number): string {
+    if (s.length >= w) {
+        return s
+    }
+
+    let r = ""
+    for (let i = 0; i < w - s.length; i++) {
+        r += " "
+    }
+    r += s
+    return r
+}
