@@ -48,4 +48,4 @@ export const datePicker = wecco.define("date-picker", (data: DatePickerData, con
     }
 
     return wecco.html`<input type="date" autofocus @change=${onChange} @blur=${onChange} .valueAsDate+omitempty=${date} style="display: inline-block;">`
-}, "value", "message")
+}, { observedAttributes: ["value", "message"]})
