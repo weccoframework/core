@@ -74,23 +74,27 @@ class Model {
 
 type Message = "inc"
 
-function update(ctx: wecco.AppContext<Message>, model: Model, message: Message): Model {
+function update({model}: wecco.UpdaterContext<Model, Message>): Model {
     return model.inc()
 }
 
-function view (ctx: wecco.AppContext<Message>, model: Model) {
+function view ({ emit, model }: wecco.ViewContext<Model, Message>) {
     return wecco.html`
-    <p>${model.explanation}</p>
+    <p class="text-sm">${model.explanation}</p>
     <p>
-        <button class="btn btn-primary" @click=${() => ctx.emit("inc")}>
+        <button 
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            @click=${() => emit("inc")}>
             You clicked me ${model.count} times
         </button>
     </p>`
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    wecco.app(() => new Model(0, "Click the button to increment the counter."), update, view, "#count-clicks-app")
+    wecco.createApp(() => new Model(0, "Click the button to increment the counter."), update, view)
+        .mount("#count-clicks-app")
 })
+
 ```
 
 `wecco.define` is used to define a custom webcomponent. It returns a factory function that can be used to 
@@ -125,17 +129,19 @@ interface CountClicks {
     count?: number
 }
 
-const CountClicks = wecco.define("count-clicks", (data: CountClicks, context) => {
-    if (typeof(data.count) === "undefined") {
-        data.count = 0
-    }
+const CountClicks = wecco.define<CountClicks>("count-clicks", ({ data, requestUpdate }) => {
+    data.count = data.count ?? 0
 
     return wecco.html`<p>
-        <button class="btn btn-primary" @click=${() => { data.count++; context.requestUpdate(); }}>
+        <button 
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
+            @click=${() => { data.count++; requestUpdate(); }}>
             You clicked me ${data.count} times
         </button>
     </p>`
-}, "count")
+}, {
+    observedAttributes: ["count"],
+})
 ```
 
 Check out the [examples](./examples) to see these two in action as well as the classical todo app.
