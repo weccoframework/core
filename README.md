@@ -1,3 +1,6 @@
+**This code in this repo has been moved to a new monorepo and can now be found at [github.com/weccoframework/wecco](https://github.com/weccoframework/wecco) under `packages/core`.
+This repo has been archived and will remain here for returning visitors. Please use the new monorepo for all code changes, issues, feature requests, ...**
+
 # wecco
 
 ![CI Status][ci-img-url] 
